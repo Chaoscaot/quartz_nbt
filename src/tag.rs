@@ -1404,24 +1404,29 @@ mod serde_impl {
         Serialize,
         Serializer,
     };
+    use serde::ser::SerializeTuple;
 
     impl Serialize for NbtTag {
         fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where S: Serializer {
-            match self {
-                &NbtTag::Byte(value) => serializer.serialize_i8(value),
-                &NbtTag::Short(value) => serializer.serialize_i16(value),
-                &NbtTag::Int(value) => serializer.serialize_i32(value),
-                &NbtTag::Long(value) => serializer.serialize_i64(value),
-                &NbtTag::Float(value) => serializer.serialize_f32(value),
-                &NbtTag::Double(value) => serializer.serialize_f64(value),
-                NbtTag::ByteArray(array) => Array::from(array).serialize(serializer),
-                NbtTag::String(value) => serializer.serialize_str(value),
-                NbtTag::List(list) => list.serialize(serializer),
-                NbtTag::Compound(compound) => compound.serialize(serializer),
-                NbtTag::IntArray(array) => Array::from(array).serialize(serializer),
-                NbtTag::LongArray(array) => Array::from(array).serialize(serializer),
-            }
+            where S: Serializer {
+            let mut tuple = serializer.serialize_tuple(2)?;
+            tuple.serialize_element(&self.tag_name())?;
+            let _ = match self {
+                &NbtTag::Byte(value) => tuple.serialize_element(&value),
+                &NbtTag::Short(value) => tuple.serialize_element(&value),
+                &NbtTag::Int(value) => tuple.serialize_element(&value),
+                &NbtTag::Long(value) => tuple.serialize_element(&value),
+                &NbtTag::Float(value) => tuple.serialize_element(&value),
+                &NbtTag::Double(value) => tuple.serialize_element(&value),
+                NbtTag::ByteArray(array) => tuple.serialize_element(&Array::from(array)),
+                NbtTag::String(value) => tuple.serialize_element(&value),
+                NbtTag::List(list) => tuple.serialize_element(&list),
+                NbtTag::Compound(compound) => tuple.serialize_element(compound),
+                NbtTag::IntArray(array) => tuple.serialize_element(&Array::from(array)),
+                NbtTag::LongArray(array) => tuple.serialize_element(&Array::from(array)),
+            };
+
+            tuple.end()
         }
     }
 
